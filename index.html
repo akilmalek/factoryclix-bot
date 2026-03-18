@@ -32,7 +32,6 @@ body::before{
     repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(0,0,0,0.04) 39px,rgba(0,0,0,0.04) 40px);
   z-index:0;pointer-events:none;
 }
-
 .brand-header{
   text-align:center;margin-bottom:20px;
   z-index:1;position:relative;
@@ -53,7 +52,6 @@ body::before{
   overflow:hidden;display:flex;flex-direction:column;
   height:620px;position:relative;z-index:1;
 }
-
 .chat-header{
   background:linear-gradient(135deg,#111 0%,#1E1E1E 100%);
   padding:14px 18px;display:flex;align-items:center;gap:12px;
@@ -121,21 +119,27 @@ body::before{
 .msg.user .av{background:var(--dark)}
 
 .bubble{
-  max-width:80%;padding:10px 14px;
+  max-width:82%;padding:10px 14px;
   border-radius:16px;font-size:13.5px;line-height:1.6;
 }
 .msg.bot .bubble{background:#F2EFE9;color:var(--text);border-bottom-left-radius:4px;}
 .msg.user .bubble{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;border-bottom-right-radius:4px;}
 .bubble strong{font-weight:600}
+.bubble ul{padding-left:16px;margin:4px 0}
+.bubble ul li{margin:3px 0;font-size:13px}
+.bubble ol{padding-left:16px;margin:4px 0}
+.bubble ol li{margin:3px 0;font-size:13px}
 
+/* OPTION BUTTONS IN REPLIES */
 .opt-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .opt{
-  background:#fff;border:1px solid var(--border);
+  background:#fff;border:1.5px solid var(--border);
   border-radius:8px;padding:6px 12px;
   font-size:12px;font-weight:500;color:var(--text);
   cursor:pointer;transition:all 0.18s;font-family:'DM Sans',sans-serif;
+  display:inline-flex;align-items:center;gap:4px;
 }
-.opt:hover{background:var(--orange);color:#fff;border-color:var(--orange)}
+.opt:hover{background:var(--orange);color:#fff;border-color:var(--orange);transform:translateY(-1px)}
 
 .typing{display:flex;gap:8px;align-items:flex-end}
 .typing-bub{
@@ -193,7 +197,7 @@ textarea.mi::placeholder{color:#bbb}
   </div>
 
   <div class="quick-bar">
-    <div class="chip" onclick="qs('Safety products dekhne hain')">🔍 Products</div>
+    <div class="chip" onclick="qs('Products dekhne hain')">🔍 Products</div>
     <div class="chip" onclick="qs('Order track karna hai')">📦 Track Order</div>
     <div class="chip" onclick="qs('Return karna hai')">↩️ Return</div>
     <div class="chip" onclick="qs('Payment problem hai')">💳 Payment</div>
@@ -232,49 +236,6 @@ textarea.mi::placeholder{color:#bbb}
 </div>
 
 <script>
-const SYS = `You are FactoryClix AI Assistant — a friendly, smart customer service chatbot for FactoryClix, an industrial B2B/B2C e-commerce platform in India.
-
-ABOUT FACTORYCLIX:
-- India's industrial marketplace: Safety Products, Electrical, Hardware, Chemicals, Fire Protection, Machines, IT Products, Paints, HVAC, Steel, Mechanical, Civil Equipment
-- Free delivery on orders above ₹300
-- Payment: UPI, Razorpay, Net Banking, Cards, COD
-- Returns: 7 days policy
-- Bulk/wholesale with special pricing (10-30% extra off)
-- Ships PAN India, 3-7 days standard, 1-2 days express
-
-YOUR STYLE:
-- Always reply in Hinglish (Hindi + English mix) — warm, friendly, professional
-- Keep replies SHORT: 2-4 lines max
-- Use emojis naturally
-- Always end with a next step or question
-
-PRODUCTS & PRICING:
-- Safety Gloves: ₹30–₹300
-- Safety Helmet (ISI): ₹220 (MRP ₹350) — 37% off
-- Safety Shoes: ₹450–₹2,500
-- Fire Extinguisher 4KG ABC: ₹1,250 (MRP ₹1,800) — 31% off
-- MCB Circuit Breaker 32A: ₹485 (MRP ₹650)
-- Industrial Cable (per meter): ₹18–₹120
-- Power Drill Machine: ₹1,200–₹4,500
-- Safety Jacket Hi-Vis: ₹180 (MRP ₹280)
-- Industrial Paint 20L: ₹2,400
-- Welding Machine 200A: ₹3,800
-- Discount code: BEVESI50 → 50% off on sale items
-- Bulk orders (50+ qty): additional 10-30% off
-
-COMMON TASKS:
-1. Product search → suggest items with price
-2. Order tracking → ask for Order ID (format: FC-XXXXX)
-3. Returns → 7 day policy
-4. Payment issues → ask what error they're facing
-5. Bulk inquiries → collect product, quantity, location
-6. Delivery → ask pincode to confirm timeline
-
-RULES:
-- Never invent order details — always ask for Order ID
-- For complex issues say: "Main aapko hamari team se connect karta hoon — WhatsApp: 9XXXXXXXXX"
-- Always be helpful, warm, never rude`;
-
 let hist = [];
 let te = null;
 
@@ -292,17 +253,67 @@ async function send() {
     const r = await fetch('/.netlify/functions/chat', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: SYS, messages: hist })
+      body: JSON.stringify({ messages: hist })
     });
     const d = await r.json();
     hideTyping();
     const reply = d.content?.[0]?.text || 'Kuch problem aayi, dobara try karein.';
     hist.push({role:'assistant', content:reply});
-    addMsg('bot', reply);
+    addBotMsg(reply);
   } catch(e) {
     hideTyping();
     addMsg('bot','⚠️ Connection issue aayi. Thodi der mein dobara try karein.');
   }
+}
+
+// Parse bot reply — extract buttons if [BUTTONS: ...] present
+function addBotMsg(text) {
+  const msgs = document.getElementById('msgs');
+  const d = document.createElement('div');
+  d.className = 'msg bot';
+
+  const av = document.createElement('div');
+  av.className = 'av';
+  av.textContent = 'FC';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+
+  // Check for BUTTONS tag
+  const btnMatch = text.match(/\[BUTTONS:(.*?)\]/s);
+  let cleanText = text;
+  let buttons = [];
+
+  if (btnMatch) {
+    cleanText = text.replace(btnMatch[0], '').trim();
+    buttons = btnMatch[1].split('|').map(b => b.trim()).filter(Boolean);
+  }
+
+  // Format text
+  const formatted = cleanText
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+
+  bubble.innerHTML = formatted;
+
+  // Add buttons if present
+  if (buttons.length > 0) {
+    const optRow = document.createElement('div');
+    optRow.className = 'opt-row';
+    buttons.forEach(btn => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.textContent = btn;
+      b.onclick = () => qs(btn);
+      optRow.appendChild(b);
+    });
+    bubble.appendChild(optRow);
+  }
+
+  d.appendChild(av);
+  d.appendChild(bubble);
+  msgs.appendChild(d);
+  msgs.scrollTop = msgs.scrollHeight;
 }
 
 function addMsg(role, text) {
