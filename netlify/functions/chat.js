@@ -69,7 +69,7 @@ REPLY FORMAT — VERY IMPORTANT:
   [BUTTONS: emoji Option1 | emoji Option2 | emoji Option3]
 
 BUTTON EXAMPLES:
-- Product categories reply: [BUTTONS: 🦺 Safety Products | ⚡ Electrical | 🔥 Fire Protection]
+- Product categories reply: [BUTTONS: 🦺 Safety | ⚡ Electrical | 🔥 Fire | 🔧 Machines | 🎨 Paints | ❄️ HVAC | 🏗️ Civil | 💻 IT | ⚙️ Mechanical | 🧪 Chemicals | 🔩 Hardware | 🏭 Bulk Order]
 - Safety products reply: [BUTTONS: ⛑️ Helmet Rs 220 | 🧤 Gloves Rs 30-300 | 👟 Safety Shoes]
 - After order question: [BUTTONS: 📦 Order Track | ↩️ Return Karo | 💳 Payment Help]
 - After bulk question: [BUTTONS: 🏭 Bulk Quote | 🏷️ Discount Code | 📞 Team se Baat]
